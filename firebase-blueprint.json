@@ -1,0 +1,414 @@
+{
+  "entities": {
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Global corporate identity, contact information, visual theme tokens, and SEO configuration for HCC – Concept Ecosystem.",
+      "type": "object",
+      "properties": {
+        "brandNameAr": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "brandNameEn": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "brandSubAr": { "type": "string", "minLength": 2, "maxLength": 240 },
+        "brandSubEn": { "type": "string", "minLength": 2, "maxLength": 240 },
+        "trademarkAr": { "type": "string", "minLength": 2, "maxLength": 180 },
+        "trademarkEn": { "type": "string", "minLength": 2, "maxLength": 180 },
+        "heroBadgeAr": { "type": "string", "minLength": 2, "maxLength": 240 },
+        "heroBadgeEn": { "type": "string", "minLength": 2, "maxLength": 240 },
+        "heroTitleAr": { "type": "string", "minLength": 2, "maxLength": 180 },
+        "heroTitleEn": { "type": "string", "minLength": 2, "maxLength": 180 },
+        "heroDescAr": { "type": "string", "minLength": 10, "maxLength": 1000 },
+        "heroDescEn": { "type": "string", "minLength": 10, "maxLength": 1000 },
+        "email": { "type": "string", "format": "email", "maxLength": 160 },
+        "phone": { "type": "string", "minLength": 6, "maxLength": 40 },
+        "whatsappUrl": { "type": "string", "maxLength": 240 },
+        "linkedinUrl": { "type": "string", "maxLength": 240 },
+        "addressAr": { "type": "string", "maxLength": 280 },
+        "addressEn": { "type": "string", "maxLength": 280 },
+        "ungmNumber": { "type": "string", "maxLength": 40 },
+        "regNumber": { "type": "string", "maxLength": 40 },
+        "commercialNumber": { "type": "string", "maxLength": 40 },
+        "gcciNumber": { "type": "string", "maxLength": 40 },
+        "seoTitleAr": { "type": "string", "maxLength": 120 },
+        "seoTitleEn": { "type": "string", "maxLength": 120 },
+        "seoDescriptionAr": { "type": "string", "maxLength": 320 },
+        "seoDescriptionEn": { "type": "string", "maxLength": 320 },
+        "seoKeywordsAr": { "type": "string", "maxLength": 400 },
+        "seoKeywordsEn": { "type": "string", "maxLength": 400 },
+        "logoNavUrl": { "type": "string", "maxLength": 250000 },
+        "logoHeroUrl": { "type": "string", "maxLength": 250000 },
+        "trustedBadgeUrl": { "type": "string", "maxLength": 250000 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "brandNameAr",
+        "brandNameEn",
+        "email",
+        "phone",
+        "heroTitleAr",
+        "heroTitleEn",
+        "updatedAt"
+      ]
+    },
+    "PageSection": {
+      "title": "PageSection",
+      "description": "CMS-managed corporate page content blocks (About, Vision, Mission, Arms, Methodology, Why HCC).",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 80 },
+        "titleAr": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "titleEn": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "subtitleAr": { "type": "string", "maxLength": 300 },
+        "subtitleEn": { "type": "string", "maxLength": 300 },
+        "bodyAr": { "type": "string", "maxLength": 5000 },
+        "bodyEn": { "type": "string", "maxLength": 5000 },
+        "visionAr": { "type": "string", "maxLength": 1000 },
+        "visionEn": { "type": "string", "maxLength": 1000 },
+        "missionAr": { "type": "string", "maxLength": 1000 },
+        "missionEn": { "type": "string", "maxLength": 1000 },
+        "items": { "type": "array", "description": "Bounded structured sub-items (arms, steps, or differentiators)." },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["slug", "titleAr", "titleEn", "status", "updatedAt"]
+    },
+    "ServiceItem": {
+      "title": "ServiceItem",
+      "description": "Consulting, engineering, BPO, venture building, and VIP institutional services.",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 80 },
+        "order": { "type": "number" },
+        "isVipTrack": { "type": "boolean" },
+        "tag": { "type": "string", "maxLength": 60 },
+        "titleAr": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "titleEn": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "summaryAr": { "type": "string", "minLength": 5, "maxLength": 1200 },
+        "summaryEn": { "type": "string", "minLength": 5, "maxLength": 1200 },
+        "targetAudienceAr": { "type": "string", "maxLength": 400 },
+        "targetAudienceEn": { "type": "string", "maxLength": 400 },
+        "solutionsAr": { "type": "array" },
+        "solutionsEn": { "type": "array" },
+        "deliverablesAr": { "type": "array" },
+        "deliverablesEn": { "type": "array" },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "slug",
+        "order",
+        "isVipTrack",
+        "tag",
+        "titleAr",
+        "titleEn",
+        "summaryAr",
+        "summaryEn",
+        "status",
+        "updatedAt"
+      ]
+    },
+    "ProjectItem": {
+      "title": "ProjectItem",
+      "description": "Executed and active contracts portfolio with verified client, challenge, HCC role, and indicators.",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 80 },
+        "order": { "type": "number" },
+        "isFlagship": { "type": "boolean" },
+        "sector": { "type": "string", "maxLength": 80 },
+        "serviceSlug": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 80 },
+        "periodAr": { "type": "string", "maxLength": 60 },
+        "periodEn": { "type": "string", "maxLength": 60 },
+        "clientAr": { "type": "string", "minLength": 2, "maxLength": 240 },
+        "clientEn": { "type": "string", "minLength": 2, "maxLength": 240 },
+        "titleAr": { "type": "string", "minLength": 2, "maxLength": 220 },
+        "titleEn": { "type": "string", "minLength": 2, "maxLength": 220 },
+        "challengeAr": { "type": "string", "maxLength": 1500 },
+        "challengeEn": { "type": "string", "maxLength": 1500 },
+        "roleAr": { "type": "string", "maxLength": 1500 },
+        "roleEn": { "type": "string", "maxLength": 1500 },
+        "solutionsAr": { "type": "string", "maxLength": 2000 },
+        "solutionsEn": { "type": "string", "maxLength": 2000 },
+        "metricsAr": { "type": "array" },
+        "metricsEn": { "type": "array" },
+        "imageUrl": { "type": "string", "maxLength": 2000 },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "slug",
+        "order",
+        "isFlagship",
+        "sector",
+        "serviceSlug",
+        "periodAr",
+        "periodEn",
+        "clientAr",
+        "clientEn",
+        "titleAr",
+        "titleEn",
+        "status",
+        "updatedAt"
+      ]
+    },
+    "ProjectMetricSet": {
+      "title": "ProjectMetricSet",
+      "description": "Dynamic chart dataset and KPI summary for the Interactive Impact Dashboard.",
+      "type": "object",
+      "properties": {
+        "key": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 60 },
+        "order": { "type": "number" },
+        "chartType": { "type": "string", "enum": ["bar", "area", "line"] },
+        "tabLabelAr": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "tabLabelEn": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "datasetLabelAr": { "type": "string", "maxLength": 200 },
+        "datasetLabelEn": { "type": "string", "maxLength": 200 },
+        "summaryTitleAr": { "type": "string", "maxLength": 200 },
+        "summaryTitleEn": { "type": "string", "maxLength": 200 },
+        "summaryKpiAr": { "type": "string", "maxLength": 160 },
+        "summaryKpiEn": { "type": "string", "maxLength": 160 },
+        "sourceNoteAr": { "type": "string", "maxLength": 300 },
+        "sourceNoteEn": { "type": "string", "maxLength": 300 },
+        "periodTag": { "type": "string", "maxLength": 60 },
+        "bulletsAr": { "type": "array" },
+        "bulletsEn": { "type": "array" },
+        "dataPoints": { "type": "array" },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "key",
+        "order",
+        "chartType",
+        "tabLabelAr",
+        "tabLabelEn",
+        "summaryTitleAr",
+        "summaryTitleEn",
+        "dataPoints",
+        "status",
+        "updatedAt"
+      ]
+    },
+    "PartnerItem": {
+      "title": "PartnerItem",
+      "description": "Verified partners, donors, clients, and institutional accreditations.",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 80 },
+        "order": { "type": "number" },
+        "category": { "type": "string", "enum": ["trusted_seal", "consortium", "digital_infra", "clients_ecosystem", "accreditation"] },
+        "abbr": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "nameAr": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "nameEn": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "relationshipAr": { "type": "string", "maxLength": 200 },
+        "relationshipEn": { "type": "string", "maxLength": 200 },
+        "detailsAr": { "type": "string", "maxLength": 500 },
+        "detailsEn": { "type": "string", "maxLength": 500 },
+        "colorLogoUrl": { "type": "string", "maxLength": 250000 },
+        "watermarkLogoUrl": { "type": "string", "maxLength": 250000 },
+        "websiteUrl": { "type": "string", "maxLength": 300 },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "slug",
+        "order",
+        "category",
+        "abbr",
+        "nameAr",
+        "nameEn",
+        "relationshipAr",
+        "relationshipEn",
+        "status",
+        "updatedAt"
+      ]
+    },
+    "TeamMember": {
+      "title": "TeamMember",
+      "description": "Executive leadership and governance members.",
+      "type": "object",
+      "properties": {
+        "order": { "type": "number" },
+        "nameAr": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "nameEn": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "roleAr": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "roleEn": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "badgeCode": { "type": "string", "maxLength": 60 },
+        "bioAr": { "type": "string", "maxLength": 800 },
+        "bioEn": { "type": "string", "maxLength": 800 },
+        "expertiseAr": { "type": "array" },
+        "expertiseEn": { "type": "array" },
+        "linkedinUrl": { "type": "string", "maxLength": 300 },
+        "photoUrl": { "type": "string", "maxLength": 2000 },
+        "isPrimaryLeader": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "order",
+        "nameAr",
+        "nameEn",
+        "roleAr",
+        "roleEn",
+        "bioAr",
+        "bioEn",
+        "isPrimaryLeader",
+        "status",
+        "updatedAt"
+      ]
+    },
+    "Inquiry": {
+      "title": "Inquiry",
+      "description": "Client RFP, consultation, and service inquiries submitted from the public site.",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "organization": { "type": "string", "minLength": 2, "maxLength": 180 },
+        "email": { "type": "string", "format": "email", "maxLength": 160 },
+        "serviceInterest": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "message": { "type": "string", "minLength": 5, "maxLength": 3000 },
+        "language": { "type": "string", "enum": ["ar", "en"] },
+        "status": { "type": "string", "enum": ["new", "under_review", "contacted", "proposal_sent", "completed", "closed"] },
+        "internalNotes": { "type": "string", "maxLength": 3000 },
+        "assignedToUid": { "type": "string", "maxLength": 128 },
+        "assignedToName": { "type": "string", "maxLength": 140 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fullName", "organization", "email", "serviceInterest", "message", "language", "status", "createdAt"]
+    },
+    "AppointmentSlot": {
+      "title": "AppointmentSlot",
+      "description": "Publicly bookable consultation time slots without PII.",
+      "type": "object",
+      "properties": {
+        "dateIso": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "maxLength": 20 },
+        "dayLabelAr": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "dayLabelEn": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "timeLabel": { "type": "string", "minLength": 2, "maxLength": 40 },
+        "advisorAr": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "advisorEn": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "isAvailable": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["dateIso", "dayLabelAr", "dayLabelEn", "timeLabel", "advisorAr", "advisorEn", "isAvailable", "updatedAt"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Consultation booking records linked to an AppointmentSlot.",
+      "type": "object",
+      "properties": {
+        "slotId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "slotLabelAr": { "type": "string", "maxLength": 120 },
+        "slotLabelEn": { "type": "string", "maxLength": 120 },
+        "clientName": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "organization": { "type": "string", "maxLength": 180 },
+        "clientEmail": { "type": "string", "format": "email", "maxLength": 160 },
+        "topic": { "type": "string", "maxLength": 500 },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "completed", "cancelled"] },
+        "internalNotes": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["slotId", "clientName", "clientEmail", "status", "createdAt"]
+    },
+    "UserAccount": {
+      "title": "UserAccount",
+      "description": "Admin and Editor RBAC user accounts.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 160 },
+        "displayName": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "role": { "type": "string", "enum": ["admin", "editor"] },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "displayName", "role", "active", "createdAt"]
+    },
+    "MediaAsset": {
+      "title": "MediaAsset",
+      "description": "Uploaded or registered logos, project imagery, and documents metadata.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "category": { "type": "string", "enum": ["logo", "project", "document", "badge"] },
+        "mimeType": { "type": "string", "maxLength": 100 },
+        "url": { "type": "string", "maxLength": 450000 },
+        "storagePath": { "type": "string", "maxLength": 300 },
+        "uploadedByUid": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "category", "mimeType", "url", "uploadedByUid", "createdAt"]
+    },
+    "ActivityLog": {
+      "title": "ActivityLog",
+      "description": "Audit log of CMS, inquiry, appointment, and RBAC actions.",
+      "type": "object",
+      "properties": {
+        "actorUid": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "actorEmail": { "type": "string", "maxLength": 160 },
+        "action": { "type": "string", "maxLength": 80 },
+        "entityType": { "type": "string", "maxLength": 60 },
+        "entityId": { "type": "string", "maxLength": 128 },
+        "summaryAr": { "type": "string", "maxLength": 300 },
+        "summaryEn": { "type": "string", "maxLength": 300 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["actorUid", "actorEmail", "action", "entityType", "entityId", "summaryAr", "summaryEn", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/site_settings/{settingId}": {
+      "schema": { "$ref": "#/entities/SiteSettings" },
+      "description": "Global site settings singleton ('main'). Publicly readable, Admin writable."
+    },
+    "/pages/{pageId}": {
+      "schema": { "$ref": "#/entities/PageSection" },
+      "description": "Corporate page content blocks. Public reads published docs; Admin/Editor manage content."
+    },
+    "/services/{serviceId}": {
+      "schema": { "$ref": "#/entities/ServiceItem" },
+      "description": "Consulting and operational services. Public reads published docs; Admin/Editor manage content."
+    },
+    "/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/ProjectItem" },
+      "description": "Executed contracts portfolio. Public reads published docs; Admin/Editor manage content."
+    },
+    "/project_metrics/{metricId}": {
+      "schema": { "$ref": "#/entities/ProjectMetricSet" },
+      "description": "Impact dashboard datasets. Public reads published docs; Admin/Editor manage content."
+    },
+    "/partners/{partnerId}": {
+      "schema": { "$ref": "#/entities/PartnerItem" },
+      "description": "Partners and accreditations. Public reads published docs; Admin/Editor manage content."
+    },
+    "/team_members/{memberId}": {
+      "schema": { "$ref": "#/entities/TeamMember" },
+      "description": "Leadership and governance members. Public reads published docs; Admin/Editor manage content."
+    },
+    "/inquiries/{inquiryId}": {
+      "schema": { "$ref": "#/entities/Inquiry" },
+      "description": "Client inquiries. Public can create with status='new'; only Admin/Editor can read/update; only Admin can delete."
+    },
+    "/appointment_slots/{slotId}": {
+      "schema": { "$ref": "#/entities/AppointmentSlot" },
+      "description": "Publicly readable consultation slots (no PII). Admin/Editor manage slots."
+    },
+    "/appointments/{appointmentId}": {
+      "schema": { "$ref": "#/entities/Appointment" },
+      "description": "Consultation booking records containing PII. Public can create with valid slotId & status='pending'; only Admin/Editor can read/update."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserAccount" },
+      "description": "RBAC user directory. Users can read their own profile; only Admin can list, create, update roles, or delete."
+    },
+    "/media/{mediaId}": {
+      "schema": { "$ref": "#/entities/MediaAsset" },
+      "description": "Media library assets. Publicly readable for published assets; Admin/Editor can upload/delete."
+    },
+    "/activity_logs/{logId}": {
+      "schema": { "$ref": "#/entities/ActivityLog" },
+      "description": "Immutable audit log. Admin/Editor can create logs for their own uid and read logs; updates and deletes are denied."
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "HCC – Concept Ecosystem | Halawa Consultancy Co.",
+  "description": "منصة شركة محمد حسن حلاوة وشركاؤه للاستشارات والتحول المؤسسي، التعافي الاقتصادي، حاضنة الأعمال Concept Hub، وخدمات التعهيد عن بُعد.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

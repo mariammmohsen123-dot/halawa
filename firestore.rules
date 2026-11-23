@@ -1,0 +1,604 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (Default-Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ── Primitive Helpers ──
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidEmail(val) {
+      return val is string && val.size() >= 5 && val.size() <= 160 && val.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
+    }
+
+    function isOptionalString(data, key, maxLen) {
+      return !(key in data) || (data[key] is string && data[key].size() <= maxLen);
+    }
+
+    function isStringList(val, maxItems) {
+      return val is list && val.size() <= maxItems && (val.size() == 0 || (val[0] is string && val[0].size() <= 400));
+    }
+
+    function isMapList(val, maxItems) {
+      return val is list && val.size() <= maxItems && (val.size() == 0 || val[0] is map);
+    }
+
+    // ── RBAC Helpers ──
+    function isBootstrapAdmin() {
+      return isVerified()
+        && request.auth.token.email is string
+        && request.auth.token.email.lower() in ['mariammmohsen123@gmail.com', 'admin@admin.com'];
+    }
+
+    function hasActiveUserDoc() {
+      return isVerified()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true;
+    }
+
+    function isAdmin() {
+      return isBootstrapAdmin() || (
+        hasActiveUserDoc()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+
+    function isStaff() {
+      return isBootstrapAdmin() || (
+        hasActiveUserDoc()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'editor']
+      );
+    }
+
+    // ── Entity Validation Blueprints ──
+    function isValidSiteSettings(data) {
+      return data.keys().hasAll(['brandNameAr', 'brandNameEn', 'email', 'phone', 'heroTitleAr', 'heroTitleEn', 'updatedAt'])
+        && data.keys().hasOnly([
+          'brandNameAr', 'brandNameEn', 'brandSubAr', 'brandSubEn',
+          'trademarkAr', 'trademarkEn', 'heroBadgeAr', 'heroBadgeEn',
+          'heroTitleAr', 'heroTitleEn', 'heroDescAr', 'heroDescEn',
+          'email', 'phone', 'whatsappUrl', 'linkedinUrl',
+          'addressAr', 'addressEn', 'ungmNumber', 'regNumber',
+          'commercialNumber', 'gcciNumber', 'seoTitleAr', 'seoTitleEn',
+          'seoDescriptionAr', 'seoDescriptionEn', 'seoKeywordsAr', 'seoKeywordsEn',
+          'logoNavUrl', 'logoHeroUrl', 'trustedBadgeUrl', 'updatedAt'
+        ])
+        && data.brandNameAr is string && data.brandNameAr.size() >= 2 && data.brandNameAr.size() <= 160
+        && data.brandNameEn is string && data.brandNameEn.size() >= 2 && data.brandNameEn.size() <= 160
+        && isOptionalString(data, 'brandSubAr', 240)
+        && isOptionalString(data, 'brandSubEn', 240)
+        && isOptionalString(data, 'trademarkAr', 180)
+        && isOptionalString(data, 'trademarkEn', 180)
+        && isOptionalString(data, 'heroBadgeAr', 240)
+        && isOptionalString(data, 'heroBadgeEn', 240)
+        && data.heroTitleAr is string && data.heroTitleAr.size() >= 2 && data.heroTitleAr.size() <= 180
+        && data.heroTitleEn is string && data.heroTitleEn.size() >= 2 && data.heroTitleEn.size() <= 180
+        && isOptionalString(data, 'heroDescAr', 1000)
+        && isOptionalString(data, 'heroDescEn', 1000)
+        && isValidEmail(data.email)
+        && data.phone is string && data.phone.size() >= 6 && data.phone.size() <= 40
+        && isOptionalString(data, 'whatsappUrl', 240)
+        && isOptionalString(data, 'linkedinUrl', 240)
+        && isOptionalString(data, 'addressAr', 280)
+        && isOptionalString(data, 'addressEn', 280)
+        && isOptionalString(data, 'ungmNumber', 40)
+        && isOptionalString(data, 'regNumber', 40)
+        && isOptionalString(data, 'commercialNumber', 40)
+        && isOptionalString(data, 'gcciNumber', 40)
+        && isOptionalString(data, 'seoTitleAr', 120)
+        && isOptionalString(data, 'seoTitleEn', 120)
+        && isOptionalString(data, 'seoDescriptionAr', 320)
+        && isOptionalString(data, 'seoDescriptionEn', 320)
+        && isOptionalString(data, 'seoKeywordsAr', 400)
+        && isOptionalString(data, 'seoKeywordsEn', 400)
+        && isOptionalString(data, 'logoNavUrl', 250000)
+        && isOptionalString(data, 'logoHeroUrl', 250000)
+        && isOptionalString(data, 'trustedBadgeUrl', 250000)
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidPageSection(data) {
+      return data.keys().hasAll(['slug', 'titleAr', 'titleEn', 'status', 'updatedAt'])
+        && data.keys().hasOnly([
+          'slug', 'titleAr', 'titleEn', 'subtitleAr', 'subtitleEn',
+          'bodyAr', 'bodyEn', 'visionAr', 'visionEn', 'missionAr', 'missionEn',
+          'items', 'status', 'updatedAt'
+        ])
+        && isValidId(data.slug) && data.slug.size() <= 80
+        && data.titleAr is string && data.titleAr.size() >= 2 && data.titleAr.size() <= 200
+        && data.titleEn is string && data.titleEn.size() >= 2 && data.titleEn.size() <= 200
+        && isOptionalString(data, 'subtitleAr', 300)
+        && isOptionalString(data, 'subtitleEn', 300)
+        && isOptionalString(data, 'bodyAr', 5000)
+        && isOptionalString(data, 'bodyEn', 5000)
+        && isOptionalString(data, 'visionAr', 1000)
+        && isOptionalString(data, 'visionEn', 1000)
+        && isOptionalString(data, 'missionAr', 1000)
+        && isOptionalString(data, 'missionEn', 1000)
+        && (!('items' in data) || isMapList(data.items, 20))
+        && data.status in ['draft', 'published']
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidServiceItem(data) {
+      return data.keys().hasAll(['slug', 'order', 'isVipTrack', 'tag', 'titleAr', 'titleEn', 'summaryAr', 'summaryEn', 'status', 'updatedAt'])
+        && data.keys().hasOnly([
+          'slug', 'order', 'isVipTrack', 'tag', 'titleAr', 'titleEn',
+          'summaryAr', 'summaryEn', 'targetAudienceAr', 'targetAudienceEn',
+          'solutionsAr', 'solutionsEn', 'deliverablesAr', 'deliverablesEn',
+          'status', 'updatedAt'
+        ])
+        && isValidId(data.slug) && data.slug.size() <= 80
+        && data.order is number && data.order >= 0 && data.order <= 999
+        && data.isVipTrack is bool
+        && data.tag is string && data.tag.size() >= 1 && data.tag.size() <= 60
+        && data.titleAr is string && data.titleAr.size() >= 2 && data.titleAr.size() <= 200
+        && data.titleEn is string && data.titleEn.size() >= 2 && data.titleEn.size() <= 200
+        && data.summaryAr is string && data.summaryAr.size() >= 5 && data.summaryAr.size() <= 1200
+        && data.summaryEn is string && data.summaryEn.size() >= 5 && data.summaryEn.size() <= 1200
+        && isOptionalString(data, 'targetAudienceAr', 400)
+        && isOptionalString(data, 'targetAudienceEn', 400)
+        && (!('solutionsAr' in data) || isStringList(data.solutionsAr, 15))
+        && (!('solutionsEn' in data) || isStringList(data.solutionsEn, 15))
+        && (!('deliverablesAr' in data) || isStringList(data.deliverablesAr, 15))
+        && (!('deliverablesEn' in data) || isStringList(data.deliverablesEn, 15))
+        && data.status in ['draft', 'published']
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidProjectItem(data) {
+      return data.keys().hasAll([
+          'slug', 'order', 'isFlagship', 'sector', 'serviceSlug',
+          'periodAr', 'periodEn', 'clientAr', 'clientEn', 'titleAr', 'titleEn',
+          'status', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'slug', 'order', 'isFlagship', 'sector', 'serviceSlug',
+          'periodAr', 'periodEn', 'clientAr', 'clientEn', 'titleAr', 'titleEn',
+          'challengeAr', 'challengeEn', 'roleAr', 'roleEn', 'solutionsAr', 'solutionsEn',
+          'metricsAr', 'metricsEn', 'imageUrl', 'status', 'updatedAt'
+        ])
+        && isValidId(data.slug) && data.slug.size() <= 80
+        && data.order is number && data.order >= 0 && data.order <= 999
+        && data.isFlagship is bool
+        && data.sector is string && data.sector.size() >= 1 && data.sector.size() <= 80
+        && isValidId(data.serviceSlug) && data.serviceSlug.size() <= 80
+        && data.periodAr is string && data.periodAr.size() >= 2 && data.periodAr.size() <= 60
+        && data.periodEn is string && data.periodEn.size() >= 2 && data.periodEn.size() <= 60
+        && data.clientAr is string && data.clientAr.size() >= 2 && data.clientAr.size() <= 240
+        && data.clientEn is string && data.clientEn.size() >= 2 && data.clientEn.size() <= 240
+        && data.titleAr is string && data.titleAr.size() >= 2 && data.titleAr.size() <= 220
+        && data.titleEn is string && data.titleEn.size() >= 2 && data.titleEn.size() <= 220
+        && isOptionalString(data, 'challengeAr', 1500)
+        && isOptionalString(data, 'challengeEn', 1500)
+        && isOptionalString(data, 'roleAr', 1500)
+        && isOptionalString(data, 'roleEn', 1500)
+        && isOptionalString(data, 'solutionsAr', 2000)
+        && isOptionalString(data, 'solutionsEn', 2000)
+        && (!('metricsAr' in data) || isStringList(data.metricsAr, 12))
+        && (!('metricsEn' in data) || isStringList(data.metricsEn, 12))
+        && isOptionalString(data, 'imageUrl', 2000)
+        && data.status in ['draft', 'published']
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidProjectMetricSet(data) {
+      return data.keys().hasAll(['key', 'order', 'chartType', 'tabLabelAr', 'tabLabelEn', 'summaryTitleAr', 'summaryTitleEn', 'dataPoints', 'status', 'updatedAt'])
+        && data.keys().hasOnly([
+          'key', 'order', 'chartType', 'tabLabelAr', 'tabLabelEn',
+          'datasetLabelAr', 'datasetLabelEn', 'summaryTitleAr', 'summaryTitleEn',
+          'summaryKpiAr', 'summaryKpiEn', 'sourceNoteAr', 'sourceNoteEn', 'periodTag',
+          'bulletsAr', 'bulletsEn', 'dataPoints', 'status', 'updatedAt'
+        ])
+        && isValidId(data.key) && data.key.size() <= 60
+        && data.order is number && data.order >= 0 && data.order <= 999
+        && data.chartType in ['bar', 'area', 'line']
+        && data.tabLabelAr is string && data.tabLabelAr.size() >= 2 && data.tabLabelAr.size() <= 120
+        && data.tabLabelEn is string && data.tabLabelEn.size() >= 2 && data.tabLabelEn.size() <= 120
+        && isOptionalString(data, 'datasetLabelAr', 200)
+        && isOptionalString(data, 'datasetLabelEn', 200)
+        && data.summaryTitleAr is string && data.summaryTitleAr.size() >= 2 && data.summaryTitleAr.size() <= 200
+        && data.summaryTitleEn is string && data.summaryTitleEn.size() >= 2 && data.summaryTitleEn.size() <= 200
+        && isOptionalString(data, 'summaryKpiAr', 160)
+        && isOptionalString(data, 'summaryKpiEn', 160)
+        && isOptionalString(data, 'sourceNoteAr', 300)
+        && isOptionalString(data, 'sourceNoteEn', 300)
+        && isOptionalString(data, 'periodTag', 60)
+        && (!('bulletsAr' in data) || isStringList(data.bulletsAr, 10))
+        && (!('bulletsEn' in data) || isStringList(data.bulletsEn, 10))
+        && isMapList(data.dataPoints, 24)
+        && data.status in ['draft', 'published']
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidPartnerItem(data) {
+      return data.keys().hasAll(['slug', 'order', 'category', 'abbr', 'nameAr', 'nameEn', 'relationshipAr', 'relationshipEn', 'status', 'updatedAt'])
+        && data.keys().hasOnly([
+          'slug', 'order', 'category', 'abbr', 'nameAr', 'nameEn',
+          'relationshipAr', 'relationshipEn', 'detailsAr', 'detailsEn',
+          'colorLogoUrl', 'watermarkLogoUrl', 'websiteUrl', 'status', 'updatedAt'
+        ])
+        && isValidId(data.slug) && data.slug.size() <= 80
+        && data.order is number && data.order >= 0 && data.order <= 999
+        && data.category in ['trusted_seal', 'consortium', 'digital_infra', 'clients_ecosystem', 'accreditation']
+        && data.abbr is string && data.abbr.size() >= 1 && data.abbr.size() <= 80
+        && data.nameAr is string && data.nameAr.size() >= 1 && data.nameAr.size() <= 160
+        && data.nameEn is string && data.nameEn.size() >= 1 && data.nameEn.size() <= 160
+        && data.relationshipAr is string && data.relationshipAr.size() >= 1 && data.relationshipAr.size() <= 200
+        && data.relationshipEn is string && data.relationshipEn.size() >= 1 && data.relationshipEn.size() <= 200
+        && isOptionalString(data, 'detailsAr', 500)
+        && isOptionalString(data, 'detailsEn', 500)
+        && isOptionalString(data, 'colorLogoUrl', 250000)
+        && isOptionalString(data, 'watermarkLogoUrl', 250000)
+        && isOptionalString(data, 'websiteUrl', 300)
+        && data.status in ['draft', 'published']
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidTeamMember(data) {
+      return data.keys().hasAll(['order', 'nameAr', 'nameEn', 'roleAr', 'roleEn', 'bioAr', 'bioEn', 'isPrimaryLeader', 'status', 'updatedAt'])
+        && data.keys().hasOnly([
+          'order', 'nameAr', 'nameEn', 'roleAr', 'roleEn', 'badgeCode',
+          'bioAr', 'bioEn', 'expertiseAr', 'expertiseEn',
+          'linkedinUrl', 'photoUrl', 'isPrimaryLeader', 'status', 'updatedAt'
+        ])
+        && data.order is number && data.order >= 0 && data.order <= 999
+        && data.nameAr is string && data.nameAr.size() >= 2 && data.nameAr.size() <= 140
+        && data.nameEn is string && data.nameEn.size() >= 2 && data.nameEn.size() <= 140
+        && data.roleAr is string && data.roleAr.size() >= 2 && data.roleAr.size() <= 160
+        && data.roleEn is string && data.roleEn.size() >= 2 && data.roleEn.size() <= 160
+        && isOptionalString(data, 'badgeCode', 60)
+        && data.bioAr is string && data.bioAr.size() >= 2 && data.bioAr.size() <= 800
+        && data.bioEn is string && data.bioEn.size() >= 2 && data.bioEn.size() <= 800
+        && (!('expertiseAr' in data) || isStringList(data.expertiseAr, 10))
+        && (!('expertiseEn' in data) || isStringList(data.expertiseEn, 10))
+        && isOptionalString(data, 'linkedinUrl', 300)
+        && isOptionalString(data, 'photoUrl', 2000)
+        && data.isPrimaryLeader is bool
+        && data.status in ['draft', 'published']
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidInquiry(data) {
+      return data.keys().hasAll(['fullName', 'organization', 'email', 'serviceInterest', 'message', 'language', 'status', 'createdAt'])
+        && data.keys().hasOnly([
+          'fullName', 'organization', 'email', 'serviceInterest', 'message',
+          'language', 'status', 'internalNotes', 'assignedToUid', 'assignedToName',
+          'createdAt', 'updatedAt'
+        ])
+        && data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 140
+        && data.organization is string && data.organization.size() >= 2 && data.organization.size() <= 180
+        && isValidEmail(data.email)
+        && data.serviceInterest is string && data.serviceInterest.size() >= 2 && data.serviceInterest.size() <= 200
+        && data.message is string && data.message.size() >= 5 && data.message.size() <= 3000
+        && data.language in ['ar', 'en']
+        && data.status in ['new', 'under_review', 'contacted', 'proposal_sent', 'completed', 'closed']
+        && isOptionalString(data, 'internalNotes', 3000)
+        && isOptionalString(data, 'assignedToUid', 128)
+        && isOptionalString(data, 'assignedToName', 140)
+        && data.createdAt is timestamp
+        && (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    function isValidAppointmentSlot(data) {
+      return data.keys().hasAll(['dateIso', 'dayLabelAr', 'dayLabelEn', 'timeLabel', 'advisorAr', 'advisorEn', 'isAvailable', 'updatedAt'])
+        && data.keys().hasOnly(['dateIso', 'dayLabelAr', 'dayLabelEn', 'timeLabel', 'advisorAr', 'advisorEn', 'isAvailable', 'updatedAt'])
+        && data.dateIso is string && data.dateIso.size() <= 20 && data.dateIso.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.dayLabelAr is string && data.dayLabelAr.size() >= 2 && data.dayLabelAr.size() <= 80
+        && data.dayLabelEn is string && data.dayLabelEn.size() >= 2 && data.dayLabelEn.size() <= 80
+        && data.timeLabel is string && data.timeLabel.size() >= 2 && data.timeLabel.size() <= 40
+        && data.advisorAr is string && data.advisorAr.size() >= 2 && data.advisorAr.size() <= 140
+        && data.advisorEn is string && data.advisorEn.size() >= 2 && data.advisorEn.size() <= 140
+        && data.isAvailable is bool
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAppointment(data) {
+      return data.keys().hasAll(['slotId', 'clientName', 'clientEmail', 'status', 'createdAt'])
+        && data.keys().hasOnly([
+          'slotId', 'slotLabelAr', 'slotLabelEn', 'clientName', 'organization',
+          'clientEmail', 'topic', 'status', 'internalNotes', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.slotId)
+        && isOptionalString(data, 'slotLabelAr', 120)
+        && isOptionalString(data, 'slotLabelEn', 120)
+        && data.clientName is string && data.clientName.size() >= 2 && data.clientName.size() <= 140
+        && isOptionalString(data, 'organization', 180)
+        && isValidEmail(data.clientEmail)
+        && isOptionalString(data, 'topic', 500)
+        && data.status in ['pending', 'confirmed', 'completed', 'cancelled']
+        && isOptionalString(data, 'internalNotes', 2000)
+        && data.createdAt is timestamp
+        && (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    function isValidUserAccount(data, userId) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'role', 'active', 'createdAt'])
+        && data.keys().hasOnly(['uid', 'email', 'displayName', 'role', 'active', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid) && data.uid == userId
+        && isValidEmail(data.email)
+        && data.displayName is string && data.displayName.size() >= 2 && data.displayName.size() <= 140
+        && data.role in ['admin', 'editor']
+        && data.active is bool
+        && data.createdAt is timestamp
+        && (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    function isValidMediaAsset(data) {
+      return data.keys().hasAll(['name', 'category', 'mimeType', 'url', 'uploadedByUid', 'createdAt'])
+        && data.keys().hasOnly(['name', 'category', 'mimeType', 'url', 'storagePath', 'uploadedByUid', 'createdAt'])
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 160
+        && data.category in ['logo', 'project', 'document', 'badge']
+        && data.mimeType is string && data.mimeType.size() >= 3 && data.mimeType.size() <= 100
+        && data.url is string && data.url.size() >= 1 && data.url.size() <= 450000
+        && isOptionalString(data, 'storagePath', 300)
+        && isValidId(data.uploadedByUid)
+        && data.createdAt is timestamp;
+    }
+
+    function isValidActivityLog(data) {
+      return data.keys().hasAll(['actorUid', 'actorEmail', 'action', 'entityType', 'entityId', 'summaryAr', 'summaryEn', 'createdAt'])
+        && data.keys().hasOnly(['actorUid', 'actorEmail', 'action', 'entityType', 'entityId', 'summaryAr', 'summaryEn', 'createdAt'])
+        && isValidId(data.actorUid) && data.actorUid == request.auth.uid
+        && isValidEmail(data.actorEmail)
+        && data.action is string && data.action.size() >= 2 && data.action.size() <= 80
+        && data.entityType is string && data.entityType.size() >= 2 && data.entityType.size() <= 60
+        && data.entityId is string && data.entityId.size() >= 1 && data.entityId.size() <= 128
+        && data.summaryAr is string && data.summaryAr.size() >= 2 && data.summaryAr.size() <= 300
+        && data.summaryEn is string && data.summaryEn.size() >= 2 && data.summaryEn.size() <= 300
+        && data.createdAt is timestamp;
+    }
+
+    // ── Collection Rules ──
+
+    match /site_settings/{settingId} {
+      allow get: if isValidId(settingId);
+      allow list: if isStaff();
+      allow create, update: if isValidId(settingId)
+        && isAdmin()
+        && isValidSiteSettings(incoming())
+        && incoming().updatedAt == request.time;
+      allow delete: if false;
+    }
+
+    match /pages/{pageId} {
+      allow get: if isValidId(pageId) && (existing().status == 'published' || isStaff());
+      allow list: if existing().status == 'published' || isStaff();
+      allow create: if isValidId(pageId)
+        && isStaff()
+        && isValidPageSection(incoming())
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(pageId)
+        && isValidPageSection(incoming())
+        && isStaff()
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'slug', 'titleAr', 'titleEn', 'subtitleAr', 'subtitleEn',
+          'bodyAr', 'bodyEn', 'visionAr', 'visionEn', 'missionAr', 'missionEn',
+          'items', 'status', 'updatedAt'
+        ]);
+      allow delete: if isValidId(pageId) && isAdmin();
+    }
+
+    match /services/{serviceId} {
+      allow get: if isValidId(serviceId) && (existing().status == 'published' || isStaff());
+      allow list: if existing().status == 'published' || isStaff();
+      allow create: if isValidId(serviceId)
+        && isStaff()
+        && isValidServiceItem(incoming())
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(serviceId)
+        && isValidServiceItem(incoming())
+        && isStaff()
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'slug', 'order', 'isVipTrack', 'tag', 'titleAr', 'titleEn',
+          'summaryAr', 'summaryEn', 'targetAudienceAr', 'targetAudienceEn',
+          'solutionsAr', 'solutionsEn', 'deliverablesAr', 'deliverablesEn',
+          'status', 'updatedAt'
+        ]);
+      allow delete: if isValidId(serviceId) && isStaff();
+    }
+
+    match /projects/{projectId} {
+      allow get: if isValidId(projectId) && (existing().status == 'published' || isStaff());
+      allow list: if existing().status == 'published' || isStaff();
+      allow create: if isValidId(projectId)
+        && isStaff()
+        && isValidProjectItem(incoming())
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(projectId)
+        && isValidProjectItem(incoming())
+        && isStaff()
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'slug', 'order', 'isFlagship', 'sector', 'serviceSlug',
+          'periodAr', 'periodEn', 'clientAr', 'clientEn', 'titleAr', 'titleEn',
+          'challengeAr', 'challengeEn', 'roleAr', 'roleEn', 'solutionsAr', 'solutionsEn',
+          'metricsAr', 'metricsEn', 'imageUrl', 'status', 'updatedAt'
+        ]);
+      allow delete: if isValidId(projectId) && isStaff();
+    }
+
+    match /project_metrics/{metricId} {
+      allow get: if isValidId(metricId) && (existing().status == 'published' || isStaff());
+      allow list: if existing().status == 'published' || isStaff();
+      allow create: if isValidId(metricId)
+        && isStaff()
+        && isValidProjectMetricSet(incoming())
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(metricId)
+        && isValidProjectMetricSet(incoming())
+        && isStaff()
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'key', 'order', 'chartType', 'tabLabelAr', 'tabLabelEn',
+          'datasetLabelAr', 'datasetLabelEn', 'summaryTitleAr', 'summaryTitleEn',
+          'summaryKpiAr', 'summaryKpiEn', 'sourceNoteAr', 'sourceNoteEn', 'periodTag',
+          'bulletsAr', 'bulletsEn', 'dataPoints', 'status', 'updatedAt'
+        ]);
+      allow delete: if isValidId(metricId) && isStaff();
+    }
+
+    match /partners/{partnerId} {
+      allow get: if isValidId(partnerId) && (existing().status == 'published' || isStaff());
+      allow list: if existing().status == 'published' || isStaff();
+      allow create: if isValidId(partnerId)
+        && isStaff()
+        && isValidPartnerItem(incoming())
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(partnerId)
+        && isValidPartnerItem(incoming())
+        && isStaff()
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'slug', 'order', 'category', 'abbr', 'nameAr', 'nameEn',
+          'relationshipAr', 'relationshipEn', 'detailsAr', 'detailsEn',
+          'colorLogoUrl', 'watermarkLogoUrl', 'websiteUrl', 'status', 'updatedAt'
+        ]);
+      allow delete: if isValidId(partnerId) && isStaff();
+    }
+
+    match /team_members/{memberId} {
+      allow get: if isValidId(memberId) && (existing().status == 'published' || isStaff());
+      allow list: if existing().status == 'published' || isStaff();
+      allow create: if isValidId(memberId)
+        && isStaff()
+        && isValidTeamMember(incoming())
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(memberId)
+        && isValidTeamMember(incoming())
+        && isStaff()
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'order', 'nameAr', 'nameEn', 'roleAr', 'roleEn', 'badgeCode',
+          'bioAr', 'bioEn', 'expertiseAr', 'expertiseEn',
+          'linkedinUrl', 'photoUrl', 'isPrimaryLeader', 'status', 'updatedAt'
+        ]);
+      allow delete: if isValidId(memberId) && isStaff();
+    }
+
+    match /inquiries/{inquiryId} {
+      allow get: if isValidId(inquiryId) && isStaff();
+      allow list: if isStaff();
+      allow create: if isValidId(inquiryId)
+        && isValidInquiry(incoming())
+        && incoming().status == 'new'
+        && !('internalNotes' in incoming())
+        && !('assignedToUid' in incoming())
+        && !('assignedToName' in incoming())
+        && incoming().createdAt == request.time;
+      allow update: if isValidId(inquiryId)
+        && isValidInquiry(incoming())
+        && isStaff()
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (isAdmin() || (
+          existing().status != 'closed'
+          && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'internalNotes', 'assignedToUid', 'assignedToName', 'updatedAt'])
+        ));
+      allow delete: if isValidId(inquiryId) && isAdmin();
+    }
+
+    match /appointment_slots/{slotId} {
+      allow get: if isValidId(slotId);
+      allow list: if existing().isAvailable == true || isStaff();
+      allow create: if isValidId(slotId)
+        && isStaff()
+        && isValidAppointmentSlot(incoming())
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(slotId)
+        && isValidAppointmentSlot(incoming())
+        && isStaff()
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'dateIso', 'dayLabelAr', 'dayLabelEn', 'timeLabel', 'advisorAr', 'advisorEn', 'isAvailable', 'updatedAt'
+        ]);
+      allow delete: if isValidId(slotId) && isStaff();
+    }
+
+    match /appointments/{appointmentId} {
+      allow get: if isValidId(appointmentId) && isStaff();
+      allow list: if isStaff();
+      allow create: if isValidId(appointmentId)
+        && isValidAppointment(incoming())
+        && incoming().status == 'pending'
+        && !('internalNotes' in incoming())
+        && incoming().createdAt == request.time
+        && exists(/databases/$(database)/documents/appointment_slots/$(incoming().slotId))
+        && get(/databases/$(database)/documents/appointment_slots/$(incoming().slotId)).data.isAvailable == true;
+      allow update: if isValidId(appointmentId)
+        && isValidAppointment(incoming())
+        && isStaff()
+        && incoming().createdAt == existing().createdAt
+        && incoming().slotId == existing().slotId
+        && incoming().updatedAt == request.time
+        && (isAdmin() || (
+          existing().status != 'cancelled'
+          && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'internalNotes', 'updatedAt'])
+        ));
+      allow delete: if isValidId(appointmentId) && isAdmin();
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && ((isSignedIn() && request.auth.uid == userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isValidId(userId)
+        && isAdmin()
+        && isValidUserAccount(incoming(), userId)
+        && incoming().createdAt == request.time;
+      allow update: if isValidId(userId)
+        && isValidUserAccount(incoming(), userId)
+        && isAdmin()
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'role', 'active', 'updatedAt']);
+      allow delete: if isValidId(userId) && isAdmin() && userId != request.auth.uid;
+    }
+
+    match /media/{mediaId} {
+      allow get: if isValidId(mediaId);
+      allow list: if isStaff();
+      allow create: if isValidId(mediaId)
+        && isStaff()
+        && isValidMediaAsset(incoming())
+        && incoming().uploadedByUid == request.auth.uid
+        && incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if isValidId(mediaId) && isStaff();
+    }
+
+    match /activity_logs/{logId} {
+      allow get: if isValidId(logId) && isStaff();
+      allow list: if isStaff();
+      allow create: if isValidId(logId)
+        && isStaff()
+        && isValidActivityLog(incoming())
+        && incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}
